@@ -1,117 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head lang="en">
-    <meta charset="UTF-8">
-    <title></title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+  <meta charset="UTF-8">
+  <title></title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
 
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular.min.js"></script>
-    <script>angular.module('components', [])
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular.js"></script>
+  <script>
 
-            .directive('tabs', function() {
-                return {
-                    transclude: true,
-                    scope: {},
-                    template:
-                    '<div class="tabbable">' +
-                    '<ul class="nav nav-tabs">' +
-                    '<li ng-repeat="pane in tabs.paneService.panes" ng-class="{active:pane.selected}">'+
-                    '<a href="" ng-click="tabs.paneService.select(pane)">{{pane.title}}</a>' +
-                    '</li>' +
-                    '</ul>' +
-                    '<div class="tab-content" ng-transclude></div>' +
-                    '</div>',
-                    replace: true,
-                    bindToController: true,
-                    controller: "TabsController as tabs"
-                };
-            })
+    angular.module('app', [])
 
-            .service('paneService', function PaneService() {
-                var paneService = this;
+        .directive('tabs', function () {
+          return {
+            transclude: true,
+            scope: {},
+            templateUrl: 'tabs.html',
+            bindToController: true,
+            controller: "TabsController as tabs"
+          };
+        })
 
-                paneService.panes = [];
+        .controller('TabsController', function TabsController() {
+          var tabs = this;
+          tabs.panes = [];
 
-                paneService.select = function(pane) {
-                    angular.forEach(paneService.panes, function(pane) {
-                        pane.selected = false;
-                    });
-                    pane.selected = true;
-                }
-
-                paneService.addPane = function (pane) {
-                    if (paneService.panes.length == 0) paneService.select(pane);
-                    paneService.panes.push(pane);
-                }
-            })
-
-            .controller('TabsController', function TabsController(paneService) {
-                var tabs = this;
-
-                tabs.paneService = paneService;
-            })
-
-            .directive('pane', function() {
-                return {
-                    transclude: true,
-                    scope: { title: '@' },
-                    template:
-                    '<div class="tab-pane" ng-class="{active: pane.selected}" ng-transclude>' +
-                    '</div>',
-                    replace: true,
-                    bindToController: true,
-                    controller: 'PaneController as pane'
-                };
-            })
-
-            .controller("PaneController", function PaneController(paneService) {
-                var pane = this;
-                pane.paneService = paneService;
-
-                pane.paneService.addPane(pane);
-            })
-
-    angular.module('app', ['components'])
-
-            .controller('BeerCounterController', function($locale) {
-                var beerCounter = this;
-                beerCounter.beers = [0, 1, 2, 3, 4, 5, 6];
-                if ($locale.id == 'en-us') {
-                    beerCounter.beerForms = {
-                        0: 'no beers',
-                        one: '{} beer',
-                        other: '{} beers'
-                    };
-                } else {
-                    beerCounter.beerForms = {
-                        0: 'žiadne pivo',
-                        one: '{} pivo',
-                        few: '{} pivá',
-                        other: '{} pív'
-                    };
-                }
+          tabs.select = function (pane) {
+            angular.forEach(tabs.panes, function (pane) {
+              pane.selected = false;
             });
+            pane.selected = true;
+          }
 
-    </script>
+          tabs.addPane = function (pane) {
+            if (tabs.panes.length == 0) tabs.select(pane);
+            tabs.panes.push(pane);
+          }
+
+
+        })
+
+        .directive('pane', function () {
+          return {
+            transclude: true,
+            scope: {
+              title: '@'
+            },
+            templateUrl: 'pane.html',
+            bindToController: true,
+            controller: 'PaneController as pane',
+            // "replace:true" is deprecated, but it breaks the example :/
+            replace: true
+            //I'm trying to remove the "require:'^tabs' so I don't
+            // have to pass the ctrl into a linking function"
+          };
+        })
+
+        .controller("PaneController", function PaneController($element) {
+          var pane = this;
+          pane.selected = false;
+
+          var tabs = $element.controller('tabs');
+          tabs.addPane(pane);
+        })
+
+  </script>
 </head>
 <body>
 <div ng-app="app">
-    <tabs>
-        <pane title="Localization">
-            Date: {{ '2012-04-01' | date:'fullDate' }} <br>
-            Currency: {{ 123456 | currency }} <br>
-            Number: {{ 98765.4321 | number }} <br>
-        </pane>
-        <pane title="Pluralization">
-            <div ng-controller="BeerCounterController as beerCounter">
-                <div ng-repeat="beerCount in beerCounter.beers">
-                    <ng-pluralize count="beerCount" when="beerCounter.beerForms"></ng-pluralize>
-                </div>
-            </div>
-        </pane>
-    </tabs>
+
+  <script type="text/ng-template" id="tabs.html">
+    <div class="tabbable">
+      <ul class="nav nav-tabs">
+        <li ng-repeat="pane in tabs.panes" ng-class="{active:pane.selected}">
+          <a href="" ng-click="tabs.select(pane)">{{pane.title}}</a>
+        </li>
+      </ul>
+      <div class="tab-content" ng-transclude></div>
+    </div>
+  </script>
+
+  <script type="text/ng-template" id="pane.html">
+    <div class="tab-pane" ng-class="{active: pane.selected}" ng-transclude>
+    </div>
+  </script>
+
+
+  <tabs>
+    <pane title="Localization">
+      Date: {{ '2012-04-01' | date:'fullDate' }} <br>
+      Currency: {{ 123456 | currency }} <br>
+      Number: {{ 98765.4321 | number }} <br>
+    </pane>
+    <pane title="Pluralization">
+      Some other stuff
+    </pane>
+    <pane title="Third">
+      whee
+    </pane>
+    <pane title="Fourth">
+      okay
+    </pane>
+  </tabs>
+
+  <tabs>
+    <pane title="Localization">
+      Date: {{ '2012-04-01' | date:'fullDate' }} <br>
+      Currency: {{ 123456 | currency }} <br>
+      Number: {{ 98765.4321 | number }} <br>
+    </pane>
+    <pane title="Pluralization">
+      Some other stuff
+    </pane>
+
+  </tabs>
 </div>
+
 
 
 </body>
